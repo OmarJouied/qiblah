@@ -17,7 +17,7 @@ export default function Home() {
     zoom: 16,
     projection: "EPSG:4326"
   }));
-  const [geolocation] = useState(new Geolocation({ trackingOptions: { enableHighAccuracy: true }, projection: view.getProjection() }));
+  const [geolocation] = useState(typeof window !== "undefined" ? new Geolocation({ trackingOptions: { enableHighAccuracy: true }, projection: view.getProjection() }) : null);
 
   useEffect(() => {
     const image = new Icon({ anchor: [.5, 24.5], anchorXUnits: 'fraction', anchorYUnits: 'pixels', src: 'geolocation_marker_heading.png' });
@@ -53,8 +53,8 @@ export default function Home() {
 
     map.addLayer(vectLayer);
 
-    geolocation.on("change:position", () => {
-      const position = geolocation.getPosition();
+    geolocation?.on("change:position", () => {
+      const position = geolocation?.getPosition();
       view.setCenter(position);
       GPSFeature.setGeometry(new Point(position));
       GPSFeature.setStyle(iconStyle);
@@ -67,7 +67,7 @@ export default function Home() {
   }, [])
 
   const toggleGPS = () => {
-    geolocation.setTracking(!geolocation.getTracking());
+    geolocation?.setTracking(!geolocation?.getTracking());
   }
 
   return (
