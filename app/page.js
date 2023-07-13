@@ -1,95 +1,79 @@
-import Image from 'next/image'
+"use client"
 import styles from './page.module.css'
+import { useEffect, useState } from 'react'
+import { Map, View, Geolocation, Feature } from 'ol'
+import TileLayer from 'ol/layer/Tile'
+import OSM from 'ol/source/OSM'
+import { defaults as defaultControls } from 'ol/control';
+import VectorSource from 'ol/source/Vector'
+import VectorLayer from 'ol/layer/Vector'
+import { Point } from 'ol/geom'
+import { Style, Fill, Circle, Icon } from 'ol/style'
 
 export default function Home() {
+  const [qiblahCoordinates] = useState([39.8261831, 21.4225148]);
+  const [view] = useState(new View({
+    center: qiblahCoordinates,
+    zoom: 16,
+    projection: "EPSG:4326"
+  }));
+  const [geolocation] = useState(new Geolocation({ trackingOptions: { enableHighAccuracy: true }, projection: view.getProjection() }));
+
+  useEffect(() => {
+    const image = new Icon({ anchor: [.5, 24.5], anchorXUnits: 'fraction', anchorYUnits: 'pixels', src: 'geolocation_marker_heading.png' });
+    const iconStyle = new Style({ image });
+    const GPSFeature = new Feature();
+    const vectSource = new VectorSource({ features: [GPSFeature] });
+    const vectLayer = new VectorLayer({
+      source: vectSource,
+      style: new Style({
+        image: new Circle({
+          radius: 7,
+          fill: new Fill({
+              color: '#0084FF',
+          }),
+        }),
+      })
+    });
+
+    const map = new Map({
+      target: 'map',
+      layers: [
+        new TileLayer({
+          source: new OSM()
+        })
+      ],
+      view,
+      controls: defaultControls({
+        zoom: false,
+        rotate: false,
+        attribution: false
+      }),
+    });
+
+    map.addLayer(vectLayer);
+
+    geolocation.on("change:position", () => {
+      const position = geolocation.getPosition();
+      view.setCenter(position);
+      GPSFeature.setGeometry(new Point(position));
+      GPSFeature.setStyle(iconStyle);
+      image.setRotation(Math.atan( qiblahCoordinates[1] - position[1] / qiblahCoordinates[0] - position[0] ));
+    })
+
+
+
+    return () => map.setTarget('');
+  }, [])
+
+  const toggleGPS = () => {
+    geolocation.setTracking(!geolocation.getTracking());
+  }
+
   return (
     <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>app/page.js</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore the Next.js 13 playground.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
+      <div id='map' className={styles.map}></div>
+      <button type='button' className={styles.toggle} onClick={toggleGPS}>حدد القبلة</button>
     </main>
   )
 }
