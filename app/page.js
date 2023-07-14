@@ -14,7 +14,7 @@ export default function Home() {
   const [qiblahCoordinates] = useState([39.8261831, 21.4225148]);
   const [view] = useState(new View({
     center: qiblahCoordinates,
-    zoom: 16,
+    zoom: 22,
     projection: "EPSG:4326"
   }));
   const [geolocation] = useState(typeof window !== "undefined" ? new Geolocation({ trackingOptions: { enableHighAccuracy: true }, projection: view.getProjection() }) : null);
@@ -60,8 +60,6 @@ export default function Home() {
       GPSFeature.setStyle(iconStyle);
       image.setRotation(Math.atan( qiblahCoordinates[1] - position[1] / qiblahCoordinates[0] - position[0] ));
     })
-
-
 
     return () => map.setTarget('');
   }, [])
